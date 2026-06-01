@@ -1,8 +1,6 @@
 grammar Homi;
 
-/*
- * Parser Rules
- */
+/* Parser Rules */
 
 programa
     : automacao+ EOF
@@ -50,9 +48,7 @@ acao
     | ESPERAR TIME
     ;
 
-/*
- * Lexer Rules
- */
+/* Lexer Rules */
 
 AUTOMACAO : 'automacao';
 QUANDO    : 'quando';
