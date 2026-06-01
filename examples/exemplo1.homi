@@ -1,0 +1,14 @@
+entidade sensor movimento = binary_sensor.movimento;
+entidade luz corredor = light.corredor;
+
+automacao "Corredor com movimento" {
+    quando estado movimento ficar on;
+
+    faca {
+        ligar corredor;
+        esperar 45s;
+        desligar corredor;
+    }
+
+    modo restart;
+}
