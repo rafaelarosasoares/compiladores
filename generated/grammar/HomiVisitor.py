@@ -14,38 +14,78 @@ class HomiVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by HomiParser#declaracao.
+    def visitDeclaracao(self, ctx:HomiParser.DeclaracaoContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by HomiParser#dominio.
+    def visitDominio(self, ctx:HomiParser.DominioContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by HomiParser#automacao.
     def visitAutomacao(self, ctx:HomiParser.AutomacaoContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by HomiParser#condicaoOpcional.
-    def visitCondicaoOpcional(self, ctx:HomiParser.CondicaoOpcionalContext):
+    # Visit a parse tree produced by HomiParser#corpoAutomacao.
+    def visitCorpoAutomacao(self, ctx:HomiParser.CorpoAutomacaoContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by HomiParser#evento.
-    def visitEvento(self, ctx:HomiParser.EventoContext):
+    # Visit a parse tree produced by HomiParser#blocoGatilho.
+    def visitBlocoGatilho(self, ctx:HomiParser.BlocoGatilhoContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by HomiParser#condicao.
-    def visitCondicao(self, ctx:HomiParser.CondicaoContext):
+    # Visit a parse tree produced by HomiParser#gatilho.
+    def visitGatilho(self, ctx:HomiParser.GatilhoContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by HomiParser#operador.
-    def visitOperador(self, ctx:HomiParser.OperadorContext):
+    # Visit a parse tree produced by HomiParser#blocoAcoes.
+    def visitBlocoAcoes(self, ctx:HomiParser.BlocoAcoesContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by HomiParser#acoes.
-    def visitAcoes(self, ctx:HomiParser.AcoesContext):
+    # Visit a parse tree produced by HomiParser#comando.
+    def visitComando(self, ctx:HomiParser.ComandoContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by HomiParser#acao.
-    def visitAcao(self, ctx:HomiParser.AcaoContext):
+    # Visit a parse tree produced by HomiParser#acaoSimples.
+    def visitAcaoSimples(self, ctx:HomiParser.AcaoSimplesContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by HomiParser#verboAcao.
+    def visitVerboAcao(self, ctx:HomiParser.VerboAcaoContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by HomiParser#espera.
+    def visitEspera(self, ctx:HomiParser.EsperaContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by HomiParser#modo.
+    def visitModo(self, ctx:HomiParser.ModoContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by HomiParser#modoValor.
+    def visitModoValor(self, ctx:HomiParser.ModoValorContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by HomiParser#referencia.
+    def visitReferencia(self, ctx:HomiParser.ReferenciaContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by HomiParser#valor.
+    def visitValor(self, ctx:HomiParser.ValorContext):
         return self.visitChildren(ctx)
 
 
