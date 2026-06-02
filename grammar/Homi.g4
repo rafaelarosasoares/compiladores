@@ -1,92 +1,148 @@
 grammar Homi;
 
-/* Parser Rules */
+// Parser rules
 
 programa
-    : automacao+ EOF
+    : declaracao* automacao+ EOF
+    ;
+
+declaracao
+    : ENTIDADE dominio IDENT IGUAL ENTITY_ID PONTO_VIRGULA
+    ;
+
+dominio
+    : LUZ
+    | SENSOR
+    | INTERRUPTOR
+    | ALARME
     ;
 
 automacao
-    : AUTOMACAO ID
-      QUANDO evento
-      condicaoOpcional
-      ENTAO acoes
-      FIM
+    : AUTOMACAO STRING ABRE_CHAVE corpoAutomacao FECHA_CHAVE
     ;
 
-condicaoOpcional
-    : SE condicao
-    |
+corpoAutomacao
+    : blocoGatilho blocoAcoes modo?
     ;
 
-evento
-    : ENTITY_ID LIGAR
-    | ENTITY_ID DESLIGAR
-    | ENTITY_ID MUDAR
+blocoGatilho
+    : QUANDO gatilho PONTO_VIRGULA
     ;
 
-condicao
-    : ENTITY_ID operador NUMBER
+gatilho
+    : ESTADO referencia FICAR valor
     ;
 
-operador
-    : GT
-    | LT
-    | GE
-    | LE
-    | EQ
-    | NE
+blocoAcoes
+    : FACA ABRE_CHAVE comando* FECHA_CHAVE
     ;
 
-acoes
-    : acao+
+comando
+    : acaoSimples PONTO_VIRGULA
+    | espera PONTO_VIRGULA
     ;
 
-acao
-    : LIGAR ENTITY_ID
-    | DESLIGAR ENTITY_ID
-    | ESPERAR TIME
+acaoSimples
+    : verboAcao referencia
     ;
 
-/* Lexer Rules */
+verboAcao
+    : LIGAR
+    | DESLIGAR
+    ;
 
-AUTOMACAO : 'automacao';
-QUANDO    : 'quando';
-SE        : 'se';
-ENTAO     : 'entao';
-FIM       : 'fim';
+espera
+    : ESPERAR DURATION
+    ;
 
-LIGAR     : 'ligar';
-DESLIGAR  : 'desligar';
-MUDAR     : 'mudar';
+modo
+    : MODO modoValor PONTO_VIRGULA
+    ;
 
-ESPERAR   : 'esperar';
+modoValor
+    : SINGLE
+    | RESTART
+    | QUEUED
+    | PARALLEL
+    ;
 
-GT : '>';
-LT : '<';
-GE : '>=';
-LE : '<=';
-EQ : '==';
-NE : '!=';
+referencia
+    : IDENT
+    | ENTITY_ID
+    ;
 
-TIME
-    : [0-9]+ ('s' | 'min')
+valor
+    : STATE
+    | STRING
+    | NUMBER
+    | BOOLEAN
+    ;
+
+// Lexer rules
+
+ENTIDADE: 'entidade';
+AUTOMACAO: 'automacao';
+QUANDO: 'quando';
+ESTADO: 'estado';
+FICAR: 'ficar';
+FACA: 'faca';
+LIGAR: 'ligar';
+DESLIGAR: 'desligar';
+ESPERAR: 'esperar';
+MODO: 'modo';
+
+LUZ: 'luz';
+SENSOR: 'sensor';
+INTERRUPTOR: 'interruptor';
+ALARME: 'alarme';
+
+SINGLE: 'single';
+RESTART: 'restart';
+QUEUED: 'queued';
+PARALLEL: 'parallel';
+
+STATE
+    : 'on'
+    | 'off'
+    | 'disarmed'
+    | 'armed'
+    | 'charging'
+    | 'idle'
+    | 'running'
+    ;
+
+BOOLEAN
+    : 'true'
+    | 'false'
+    ;
+
+IGUAL: '=';
+ABRE_CHAVE: '{';
+FECHA_CHAVE: '}';
+PONTO_VIRGULA: ';';
+
+DURATION
+    : [0-9]+ ('s' | 'min' | 'h')
     ;
 
 NUMBER
-    : [0-9]+
+    : [0-9]+ ('.' [0-9]+)?
     ;
 
 ENTITY_ID
-    : [a-zA-Z]+ '.' [a-zA-Z_][a-zA-Z0-9_]*
+    : [a-z_][a-z0-9_]* '.' [a-zA-Z0-9_]+
     ;
 
-ID
-    : [A-Z][a-zA-Z0-9_]*
+IDENT
+    : [a-zA-Z_][a-zA-Z0-9_]*
+    ;
+
+STRING
+    : '"' (~["\r\n])* '"'
     ;
 
 COMMENT
-    : '#' ~[\r\n]* -> skip
+    : ('//' ~[\r\n]* | '#' ~[\r\n]*) -> skip
     ;
 
 WS
