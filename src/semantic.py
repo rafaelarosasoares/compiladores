@@ -1,9 +1,27 @@
-from ast_nodes import Program, SimpleAction, DelayAction
+import re
+
+from ast_nodes import Program, SimpleAction, DelayAction, EntityDecl
 
 
 class SemanticAnalyzer:
+    ACTION_DOMAIN_MAP = {
+        "ligar": ["luz", "interruptor", "alarme"],
+        "desligar": ["luz", "interruptor", "alarme"],
+    }
+
+    TRIGGER_STATE_MAP = {
+        "luz": ["on", "off"],
+        "interruptor": ["on", "off"],
+        "alarme": ["armed", "disarmed", "on", "off"],
+        "sensor": ["on", "off", "armed", "disarmed", "charging", "idle", "running"],
+    }
+
+    DURATION_PATTERN = re.compile(r"^([1-9][0-9]*)(s|min|h)$")
+
     def __init__(self):
         self.symbol_table = {}
+        self.entity_id_table = {}
+        self.automation_names = set()
         self.errors = []
 
     def analyze(self, program: Program):
@@ -14,12 +32,30 @@ class SemanticAnalyzer:
 
     def build_symbol_table(self, program: Program):
         for decl in program.declarations:
-            if decl.name in self.symbol_table:
+            self.check_entity_declaration(decl)
+
+        for automation in program.automations:
+            if automation.name in self.automation_names:
                 self.errors.append(
-                    f"Erro semântico: entidade '{decl.name}' já foi declarada."
+                    f"Erro semântico: automação '{automation.name}' já foi declarada."
                 )
             else:
-                self.symbol_table[decl.name] = decl
+                self.automation_names.add(automation.name)
+
+    def check_entity_declaration(self, decl: EntityDecl):
+        if decl.name in self.symbol_table:
+            self.errors.append(
+                f"Erro semântico: entidade '{decl.name}' já foi declarada."
+            )
+        else:
+            self.symbol_table[decl.name] = decl
+
+        if decl.entity_id in self.entity_id_table:
+            self.errors.append(
+                f"Erro semântico: identificador de entidade '{decl.entity_id}' já foi usado."
+            )
+        else:
+            self.entity_id_table[decl.entity_id] = decl
 
     def check_automations(self, program: Program):
         for automation in program.automations:
@@ -29,68 +65,74 @@ class SemanticAnalyzer:
                 self.check_action(action)
 
     def check_trigger(self, trigger):
-        entity_name = trigger.entity
+        entity = self.resolve_entity(trigger.entity)
 
-        if not self.entity_exists(entity_name):
+        if entity is None:
             self.errors.append(
-                f"Erro semântico: entidade '{entity_name}' usada no gatilho não foi declarada."
+                f"Erro semântico: entidade '{trigger.entity}' usada no gatilho não foi declarada."
             )
+            return
+
+        self.check_trigger_value(trigger.value, entity)
+
+    def check_trigger_value(self, value: str, entity: EntityDecl):
+        normalized_value = self.normalize_value(value)
+        allowed_states = self.TRIGGER_STATE_MAP.get(entity.domain, [])
+
+        if normalized_value not in allowed_states:
+            self.errors.append(
+                f"Erro semântico: valor '{normalized_value}' não é válido para o domínio "
+                f"'{entity.domain}' no gatilho da entidade '{entity.name}'."
+            )
+
+    def normalize_value(self, value: str) -> str:
+        if value.startswith('"') and value.endswith('"'):
+            return value[1:-1]
+        return value
 
     def check_action(self, action):
         if isinstance(action, SimpleAction):
             self.check_simple_action(action)
-
         elif isinstance(action, DelayAction):
             self.check_delay(action)
 
     def check_simple_action(self, action: SimpleAction):
-        entity_name = action.entity
+        entity = self.resolve_entity(action.entity)
 
-        if not self.entity_exists(entity_name):
+        if entity is None:
             self.errors.append(
-                f"Erro semântico: entidade '{entity_name}' usada na ação '{action.verb}' não foi declarada."
+                f"Erro semântico: entidade '{action.entity}' usada na ação '{action.verb}' não foi declarada."
             )
             return
 
-        entity_decl = self.symbol_table[entity_name]
-        entity_domain = entity_decl.domain
-
-        allowed_domains = {
-            "ligar": ["luz", "interruptor", "alarme"],
-            "desligar": ["luz", "interruptor", "alarme"],
-        }
-
-        if action.verb not in allowed_domains:
+        allowed_domains = self.ACTION_DOMAIN_MAP.get(action.verb)
+        if allowed_domains is None:
             self.errors.append(
                 f"Erro semântico: ação desconhecida '{action.verb}'."
             )
             return
 
-        if entity_domain not in allowed_domains[action.verb]:
+        if entity.domain not in allowed_domains:
             self.errors.append(
                 f"Erro semântico: ação '{action.verb}' não pode ser aplicada à entidade "
-                f"'{entity_name}', pois ela foi declarada como '{entity_domain}'."
+                f"'{action.entity}', pois ela foi declarada como '{entity.domain}'."
             )
 
     def check_delay(self, action: DelayAction):
-        duration = action.duration
-
-        if duration.endswith("s"):
-            value = int(duration[:-1])
-        elif duration.endswith("min"):
-            value = int(duration[:-3])
-        elif duration.endswith("h"):
-            value = int(duration[:-1])
-        else:
+        match = self.DURATION_PATTERN.match(action.duration)
+        if not match:
             self.errors.append(
-                f"Erro semântico: duração inválida '{duration}'."
+                f"Erro semântico: duração inválida '{action.duration}'."
             )
             return
 
+        value = int(match.group(1))
         if value <= 0:
             self.errors.append(
-                f"Erro semântico: duração deve ser maior que zero, mas recebeu '{duration}'."
+                f"Erro semântico: duração deve ser maior que zero, mas recebeu '{action.duration}'."
             )
 
-    def entity_exists(self, entity_name: str):
-        return entity_name in self.symbol_table
+    def resolve_entity(self, reference: str):
+        if reference in self.symbol_table:
+            return self.symbol_table[reference]
+        return self.entity_id_table.get(reference)
