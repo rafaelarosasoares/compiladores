@@ -2,9 +2,13 @@ import sys
 from antlr4 import FileStream, CommonTokenStream
 
 sys.path.append("generated/grammar")
+sys.path.append("src")
 
 from HomiLexer import HomiLexer
 from HomiParser import HomiParser
+
+from ast_builder import AstBuilder
+from semantic import SemanticAnalyzer
 
 
 def main():
@@ -15,14 +19,34 @@ def main():
     input_file = sys.argv[1]
 
     input_stream = FileStream(input_file, encoding="utf-8")
+
     lexer = HomiLexer(input_stream)
     token_stream = CommonTokenStream(lexer)
-    parser = HomiParser(token_stream)
 
+    parser = HomiParser(token_stream)
     tree = parser.programa()
 
-    print("Parse concluído.")
-    print(tree.toStringTree(recog=parser))
+    syntax_errors = parser.getNumberOfSyntaxErrors()
+
+    if syntax_errors > 0:
+        print(f"Análise sintática encontrou {syntax_errors} erro(s).")
+        return
+
+    print("Análise sintática concluída sem erros.")
+
+    ast = AstBuilder().visit(tree)
+
+    semantic_analyzer = SemanticAnalyzer()
+    semantic_errors = semantic_analyzer.analyze(ast)
+
+    if semantic_errors:
+        print("\nErros semânticos encontrados:")
+        for error in semantic_errors:
+            print(f"- {error}")
+        return
+
+    print("Análise semântica concluída sem erros.")
+    print("Programa válido.")
 
 
 if __name__ == "__main__":

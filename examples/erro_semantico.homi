@@ -1,0 +1,12 @@
+entidade sensor movimento = binary_sensor.movimento;
+entidade luz corredor = light.corredor;
+
+automacao "Erro semantico" {
+    quando estado movimento ficar on;
+
+    faca {
+        ligar movimento;
+    }
+
+    modo restart;
+}
