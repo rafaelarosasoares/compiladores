@@ -9,6 +9,7 @@ from HomiParser import HomiParser
 
 from ast_builder import AstBuilder
 from semantic import SemanticAnalyzer
+from yaml_generator import YamlGenerator
 
 
 def main():
@@ -47,6 +48,31 @@ def main():
 
     print("Análise semântica concluída sem erros.")
     print("Programa válido.")
+
+    # Geração YAML
+    generator = YamlGenerator(
+        semantic_analyzer.symbol_table
+    )
+
+    for automation in ast.automations:
+
+        yaml_text = generator.generate(
+            automation
+        )
+
+        filename = (
+            automation.name.replace(" ", "_")
+            + ".yaml"
+        )
+
+        with open(
+            filename,
+            "w",
+            encoding="utf-8"
+        ) as file:
+            file.write(yaml_text)
+
+        print(f"YAML gerado: {filename}")
 
 
 if __name__ == "__main__":
