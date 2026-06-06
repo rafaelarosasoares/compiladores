@@ -1,0 +1,20 @@
+alias: "Cozinha ocupada"
+
+trigger:
+  - platform: state
+    entity_id: binary_sensor.presenca_cozinha
+    to: "on"
+
+action:
+  - service: light.turn_on
+    target:
+      entity_id: light.cozinha
+  - service: switch.turn_on
+    target:
+      entity_id: switch.exaustor
+  - delay: "1h"
+  - service: light.turn_off
+    target:
+      entity_id: light.cozinha
+
+mode: parallel

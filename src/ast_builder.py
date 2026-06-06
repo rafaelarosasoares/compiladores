@@ -21,6 +21,10 @@ def clean_string(text: str) -> str:
     return text
 
 
+def line_of(ctx) -> int:
+    return ctx.start.line if ctx.start is not None else 0
+
+
 class AstBuilder(HomiVisitor):
     def visitPrograma(self, ctx: HomiParser.ProgramaContext):
         declarations = []
@@ -39,7 +43,7 @@ class AstBuilder(HomiVisitor):
         name = ctx.IDENT().getText()
         entity_id = ctx.ENTITY_ID().getText()
 
-        return EntityDecl(domain, name, entity_id)
+        return EntityDecl(domain, name, entity_id, line_of(ctx))
 
     def visitAutomacao(self, ctx: HomiParser.AutomacaoContext):
         name = clean_string(ctx.STRING().getText())
@@ -52,7 +56,7 @@ class AstBuilder(HomiVisitor):
         if body.modo() is not None:
             mode = body.modo().modoValor().getText()
 
-        return Automation(name, trigger, actions, mode)
+        return Automation(name, trigger, actions, mode, line_of(ctx))
 
     def visitBlocoGatilho(self, ctx: HomiParser.BlocoGatilhoContext):
         return self.visit(ctx.gatilho())
@@ -60,7 +64,7 @@ class AstBuilder(HomiVisitor):
     def visitGatilho(self, ctx: HomiParser.GatilhoContext):
         entity = ctx.referencia().getText()
         value = ctx.valor().getText()
-        return StateTrigger(entity, value)
+        return StateTrigger(entity, value, line_of(ctx))
 
     def visitBlocoAcoes(self, ctx: HomiParser.BlocoAcoesContext):
         actions = []
@@ -83,8 +87,8 @@ class AstBuilder(HomiVisitor):
         verb = ctx.verboAcao().getText()
         entity = ctx.referencia().getText()
 
-        return SimpleAction(verb, entity)
+        return SimpleAction(verb, entity, line_of(ctx))
 
     def visitEspera(self, ctx: HomiParser.EsperaContext):
         duration = ctx.DURATION().getText()
-        return DelayAction(duration)
+        return DelayAction(duration, line_of(ctx))

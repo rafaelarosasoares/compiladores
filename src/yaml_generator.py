@@ -1,6 +1,12 @@
 from ast_nodes import SimpleAction, DelayAction
 
 
+def clean_value(value: str) -> str:
+    if value.startswith('"') and value.endswith('"'):
+        return value[1:-1]
+    return value
+
+
 class YamlGenerator:
 
     DOMAIN_MAP = {
@@ -9,8 +15,9 @@ class YamlGenerator:
         "alarme": "alarm_control_panel",
     }
 
-    def __init__(self, symbol_table):
+    def __init__(self, symbol_table, entity_id_table=None):
         self.symbol_table = symbol_table
+        self.entity_id_table = entity_id_table or {}
 
     def generate(self, automation):
 
@@ -21,12 +28,12 @@ class YamlGenerator:
         lines.append("")
 
         # Trigger
-        trigger_entity = self.symbol_table[automation.trigger.entity]
+        trigger_entity = self.resolve_entity(automation.trigger.entity)
 
         lines.append("trigger:")
         lines.append("  - platform: state")
         lines.append(f"    entity_id: {trigger_entity.entity_id}")
-        lines.append(f'    to: "{automation.trigger.value}"')
+        lines.append(f'    to: "{clean_value(automation.trigger.value)}"')
         lines.append("")
 
         # Actions
@@ -36,7 +43,7 @@ class YamlGenerator:
 
             if isinstance(action, SimpleAction):
 
-                entity = self.symbol_table[action.entity]
+                entity = self.resolve_entity(action.entity)
 
                 domain = self.DOMAIN_MAP.get(
                     entity.domain,
@@ -68,3 +75,8 @@ class YamlGenerator:
             lines.append(f"mode: {automation.mode}")
 
         return "\n".join(lines)
+
+    def resolve_entity(self, reference: str):
+        if reference in self.symbol_table:
+            return self.symbol_table[reference]
+        return self.entity_id_table[reference]

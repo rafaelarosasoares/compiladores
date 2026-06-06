@@ -1,0 +1,17 @@
+alias: "Lavagem finalizada"
+
+trigger:
+  - platform: state
+    entity_id: sensor.maquina_lavar
+    to: "idle"
+
+action:
+  - service: switch.turn_on
+    target:
+      entity_id: switch.aviso_lavanderia
+  - delay: "10min"
+  - service: switch.turn_off
+    target:
+      entity_id: switch.aviso_lavanderia
+
+mode: restart

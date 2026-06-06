@@ -1,0 +1,14 @@
+entidade alarme alarme_casa = alarm_control_panel.alarmo;
+entidade luz sala = light.sala;
+entidade interruptor tomada_tv = switch.tomada_tv;
+
+automacao "Casa desarmada" {
+    quando estado alarme_casa ficar disarmed;
+
+    faca {
+        ligar sala;
+        ligar tomada_tv;
+    }
+
+    modo queued;
+}

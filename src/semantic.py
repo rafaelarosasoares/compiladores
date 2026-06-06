@@ -36,23 +36,26 @@ class SemanticAnalyzer:
 
         for automation in program.automations:
             if automation.name in self.automation_names:
-                self.errors.append(
-                    f"Erro semântico: automação '{automation.name}' já foi declarada."
+                self.add_error(
+                    automation.line,
+                    f"automação '{automation.name}' já foi declarada."
                 )
             else:
                 self.automation_names.add(automation.name)
 
     def check_entity_declaration(self, decl: EntityDecl):
         if decl.name in self.symbol_table:
-            self.errors.append(
-                f"Erro semântico: entidade '{decl.name}' já foi declarada."
+            self.add_error(
+                decl.line,
+                f"entidade '{decl.name}' já foi declarada."
             )
         else:
             self.symbol_table[decl.name] = decl
 
         if decl.entity_id in self.entity_id_table:
-            self.errors.append(
-                f"Erro semântico: identificador de entidade '{decl.entity_id}' já foi usado."
+            self.add_error(
+                decl.line,
+                f"identificador de entidade '{decl.entity_id}' já foi usado."
             )
         else:
             self.entity_id_table[decl.entity_id] = decl
@@ -68,20 +71,22 @@ class SemanticAnalyzer:
         entity = self.resolve_entity(trigger.entity)
 
         if entity is None:
-            self.errors.append(
-                f"Erro semântico: entidade '{trigger.entity}' usada no gatilho não foi declarada."
+            self.add_error(
+                trigger.line,
+                f"entidade '{trigger.entity}' usada no gatilho não foi declarada."
             )
             return
 
-        self.check_trigger_value(trigger.value, entity)
+        self.check_trigger_value(trigger.value, entity, trigger.line)
 
-    def check_trigger_value(self, value: str, entity: EntityDecl):
+    def check_trigger_value(self, value: str, entity: EntityDecl, line: int):
         normalized_value = self.normalize_value(value)
         allowed_states = self.TRIGGER_STATE_MAP.get(entity.domain, [])
 
         if normalized_value not in allowed_states:
-            self.errors.append(
-                f"Erro semântico: valor '{normalized_value}' não é válido para o domínio "
+            self.add_error(
+                line,
+                f"valor '{normalized_value}' não é válido para o domínio "
                 f"'{entity.domain}' no gatilho da entidade '{entity.name}'."
             )
 
@@ -100,39 +105,50 @@ class SemanticAnalyzer:
         entity = self.resolve_entity(action.entity)
 
         if entity is None:
-            self.errors.append(
-                f"Erro semântico: entidade '{action.entity}' usada na ação '{action.verb}' não foi declarada."
+            self.add_error(
+                action.line,
+                f"entidade '{action.entity}' usada na ação '{action.verb}' não foi declarada."
             )
             return
 
         allowed_domains = self.ACTION_DOMAIN_MAP.get(action.verb)
         if allowed_domains is None:
-            self.errors.append(
-                f"Erro semântico: ação desconhecida '{action.verb}'."
+            self.add_error(
+                action.line,
+                f"ação desconhecida '{action.verb}'."
             )
             return
 
         if entity.domain not in allowed_domains:
-            self.errors.append(
-                f"Erro semântico: ação '{action.verb}' não pode ser aplicada à entidade "
+            self.add_error(
+                action.line,
+                f"ação '{action.verb}' não pode ser aplicada à entidade "
                 f"'{action.entity}', pois ela foi declarada como '{entity.domain}'."
             )
 
     def check_delay(self, action: DelayAction):
         match = self.DURATION_PATTERN.match(action.duration)
         if not match:
-            self.errors.append(
-                f"Erro semântico: duração inválida '{action.duration}'."
+            self.add_error(
+                action.line,
+                f"duração inválida '{action.duration}'."
             )
             return
 
         value = int(match.group(1))
         if value <= 0:
-            self.errors.append(
-                f"Erro semântico: duração deve ser maior que zero, mas recebeu '{action.duration}'."
+            self.add_error(
+                action.line,
+                f"duração deve ser maior que zero, mas recebeu '{action.duration}'."
             )
 
     def resolve_entity(self, reference: str):
         if reference in self.symbol_table:
             return self.symbol_table[reference]
         return self.entity_id_table.get(reference)
+
+    def add_error(self, line: int, message: str):
+        if line:
+            self.errors.append(f"Linha {line}: erro semântico: {message}")
+        else:
+            self.errors.append(f"Erro semântico: {message}")

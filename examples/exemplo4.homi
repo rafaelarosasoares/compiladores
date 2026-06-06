@@ -1,0 +1,14 @@
+entidade sensor maquina_lavar = sensor.maquina_lavar;
+entidade interruptor aviso_lavanderia = switch.aviso_lavanderia;
+
+automacao "Lavagem finalizada" {
+    quando estado sensor.maquina_lavar ficar idle;
+
+    faca {
+        ligar switch.aviso_lavanderia;
+        esperar 10min;
+        desligar aviso_lavanderia;
+    }
+
+    modo restart;
+}

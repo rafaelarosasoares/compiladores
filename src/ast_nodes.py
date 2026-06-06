@@ -13,6 +13,7 @@ class EntityDecl:
     domain: str
     name: str
     entity_id: str
+    line: int = 0
 
 
 @dataclass
@@ -21,12 +22,14 @@ class Automation:
     trigger: "StateTrigger"
     actions: List["Action"]
     mode: Optional[str]
+    line: int = 0
 
 
 @dataclass
 class StateTrigger:
     entity: str
     value: str
+    line: int = 0
 
 
 class Action:
@@ -37,8 +40,10 @@ class Action:
 class SimpleAction(Action):
     verb: str
     entity: str
+    line: int = 0
 
 
 @dataclass
 class DelayAction(Action):
     duration: str
+    line: int = 0

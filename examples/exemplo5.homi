@@ -1,0 +1,16 @@
+entidade luz cozinha = light.cozinha;
+entidade sensor presenca_cozinha = binary_sensor.presenca_cozinha;
+entidade interruptor exaustor = switch.exaustor;
+
+automacao "Cozinha ocupada" {
+    quando estado presenca_cozinha ficar on;
+
+    faca {
+        ligar cozinha;
+        ligar exaustor;
+        esperar 1h;
+        desligar light.cozinha;
+    }
+
+    modo parallel;
+}

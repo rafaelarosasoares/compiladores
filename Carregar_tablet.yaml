@@ -1,0 +1,17 @@
+alias: "Carregar tablet"
+
+trigger:
+  - platform: state
+    entity_id: sensor.bateria_tablet
+    to: "charging"
+
+action:
+  - service: switch.turn_on
+    target:
+      entity_id: switch.carregador_tablet
+  - delay: "30min"
+  - service: switch.turn_off
+    target:
+      entity_id: switch.carregador_tablet
+
+mode: single

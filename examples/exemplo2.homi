@@ -1,0 +1,14 @@
+entidade interruptor carregador_tablet = switch.carregador_tablet;
+entidade sensor bateria_tablet = sensor.bateria_tablet;
+
+automacao "Carregar tablet" {
+    quando estado bateria_tablet ficar charging;
+
+    faca {
+        ligar carregador_tablet;
+        esperar 30min;
+        desligar carregador_tablet;
+    }
+
+    modo single;
+}

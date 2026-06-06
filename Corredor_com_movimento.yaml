@@ -1,0 +1,17 @@
+alias: "Corredor com movimento"
+
+trigger:
+  - platform: state
+    entity_id: binary_sensor.movimento
+    to: "on"
+
+action:
+  - service: light.turn_on
+    target:
+      entity_id: light.corredor
+  - delay: "45s"
+  - service: light.turn_off
+    target:
+      entity_id: light.corredor
+
+mode: restart
