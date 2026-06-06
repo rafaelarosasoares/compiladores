@@ -6,10 +6,9 @@ sys.path.append("generated/grammar")
 sys.path.append("src")
 
 from HomiLexer import HomiLexer
-from HomiParser import HomiParser
 
-from ast_builder import AstBuilder
 from semantic import SemanticAnalyzer
+from table_parser import TableParser
 from yaml_generator import YamlGenerator
 
 
@@ -37,26 +36,27 @@ def main():
     lexer.addErrorListener(syntax_error_collector)
 
     token_stream = CommonTokenStream(lexer)
+    token_stream.fill()
 
-    parser = HomiParser(token_stream)
-    parser.removeErrorListeners()
-    parser.addErrorListener(syntax_error_collector)
-    tree = parser.programa()
-
-    syntax_errors = parser.getNumberOfSyntaxErrors()
-
-    if syntax_errors > 0 or syntax_error_collector.errors:
+    if syntax_error_collector.errors:
         print(
-            f"Análise sintática encontrou "
-            f"{max(syntax_errors, len(syntax_error_collector.errors))} erro(s)."
+            f"Análise léxica encontrou "
+            f"{len(syntax_error_collector.errors)} erro(s)."
         )
         for error in syntax_error_collector.errors:
             print(f"- {error}")
         return
 
-    print("Análise sintática concluída sem erros.")
+    parser = TableParser(token_stream.tokens)
+    ast = parser.parse()
 
-    ast = AstBuilder().visit(tree)
+    if parser.errors:
+        print(f"Análise sintática encontrou {len(parser.errors)} erro(s).")
+        for error in parser.errors:
+            print(f"- {error}")
+        return
+
+    print("Análise sintática concluída sem erros.")
 
     semantic_analyzer = SemanticAnalyzer()
     semantic_errors = semantic_analyzer.analyze(ast)
