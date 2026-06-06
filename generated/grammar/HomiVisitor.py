@@ -44,6 +44,31 @@ class HomiVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by HomiParser#blocoCondicoes.
+    def visitBlocoCondicoes(self, ctx:HomiParser.BlocoCondicoesContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by HomiParser#expressaoCondicao.
+    def visitExpressaoCondicao(self, ctx:HomiParser.ExpressaoCondicaoContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by HomiParser#termoCondicao.
+    def visitTermoCondicao(self, ctx:HomiParser.TermoCondicaoContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by HomiParser#condicaoEstado.
+    def visitCondicaoEstado(self, ctx:HomiParser.CondicaoEstadoContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by HomiParser#operadorLogico.
+    def visitOperadorLogico(self, ctx:HomiParser.OperadorLogicoContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by HomiParser#blocoAcoes.
     def visitBlocoAcoes(self, ctx:HomiParser.BlocoAcoesContext):
         return self.visitChildren(ctx)

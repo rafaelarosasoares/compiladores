@@ -71,6 +71,51 @@ class HomiListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by HomiParser#blocoCondicoes.
+    def enterBlocoCondicoes(self, ctx:HomiParser.BlocoCondicoesContext):
+        pass
+
+    # Exit a parse tree produced by HomiParser#blocoCondicoes.
+    def exitBlocoCondicoes(self, ctx:HomiParser.BlocoCondicoesContext):
+        pass
+
+
+    # Enter a parse tree produced by HomiParser#expressaoCondicao.
+    def enterExpressaoCondicao(self, ctx:HomiParser.ExpressaoCondicaoContext):
+        pass
+
+    # Exit a parse tree produced by HomiParser#expressaoCondicao.
+    def exitExpressaoCondicao(self, ctx:HomiParser.ExpressaoCondicaoContext):
+        pass
+
+
+    # Enter a parse tree produced by HomiParser#termoCondicao.
+    def enterTermoCondicao(self, ctx:HomiParser.TermoCondicaoContext):
+        pass
+
+    # Exit a parse tree produced by HomiParser#termoCondicao.
+    def exitTermoCondicao(self, ctx:HomiParser.TermoCondicaoContext):
+        pass
+
+
+    # Enter a parse tree produced by HomiParser#condicaoEstado.
+    def enterCondicaoEstado(self, ctx:HomiParser.CondicaoEstadoContext):
+        pass
+
+    # Exit a parse tree produced by HomiParser#condicaoEstado.
+    def exitCondicaoEstado(self, ctx:HomiParser.CondicaoEstadoContext):
+        pass
+
+
+    # Enter a parse tree produced by HomiParser#operadorLogico.
+    def enterOperadorLogico(self, ctx:HomiParser.OperadorLogicoContext):
+        pass
+
+    # Exit a parse tree produced by HomiParser#operadorLogico.
+    def exitOperadorLogico(self, ctx:HomiParser.OperadorLogicoContext):
+        pass
+
+
     # Enter a parse tree produced by HomiParser#blocoAcoes.
     def enterBlocoAcoes(self, ctx:HomiParser.BlocoAcoesContext):
         pass

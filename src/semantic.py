@@ -63,6 +63,7 @@ class SemanticAnalyzer:
     def check_automations(self, program: Program):
         for automation in program.automations:
             self.check_trigger(automation.trigger)
+            self.check_condition_expression(automation.condition)
 
             for action in automation.actions:
                 self.check_action(action)
@@ -78,6 +79,31 @@ class SemanticAnalyzer:
             return
 
         self.check_trigger_value(trigger.value, entity, trigger.line)
+
+    def check_condition_expression(self, condition):
+        if condition is None:
+            return
+
+        if len(set(condition.operators)) > 1:
+            self.add_error(
+                condition.line,
+                "condição não pode misturar operadores 'e' e 'ou' na mesma expressão."
+            )
+
+        for term in condition.terms:
+            self.check_condition_term(term)
+
+    def check_condition_term(self, term):
+        entity = self.resolve_entity(term.entity)
+
+        if entity is None:
+            self.add_error(
+                term.line,
+                f"entidade '{term.entity}' usada na condição não foi declarada."
+            )
+            return
+
+        self.check_trigger_value(term.value, entity, term.line)
 
     def check_trigger_value(self, value: str, entity: EntityDecl, line: int):
         normalized_value = self.normalize_value(value)
@@ -149,6 +175,6 @@ class SemanticAnalyzer:
 
     def add_error(self, line: int, message: str):
         if line:
-            self.errors.append(f"Linha {line}: erro semântico: {message}")
+            self.errors.append(f"Linha {line}: {message}")
         else:
-            self.errors.append(f"Erro semântico: {message}")
+            self.errors.append(message)

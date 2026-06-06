@@ -5,6 +5,11 @@ trigger:
     entity_id: binary_sensor.movimento
     to: "on"
 
+condition:
+  - condition: state
+    entity_id: light.corredor
+    state: "off"
+
 action:
   - service: light.turn_on
     target:

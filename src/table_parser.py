@@ -6,6 +6,8 @@ from ast_nodes import (
     EntityDecl,
     Automation,
     StateTrigger,
+    ConditionExpression,
+    ConditionTerm,
     SimpleAction,
     DelayAction,
 )
@@ -34,6 +36,10 @@ class TableParser:
         HomiLexer.DESLIGAR: "desligar",
         HomiLexer.ESPERAR: "esperar",
         HomiLexer.MODO: "modo",
+        HomiLexer.SE: "se",
+        HomiLexer.E: "e",
+        HomiLexer.OU: "ou",
+        HomiLexer.NAO: "nao",
         HomiLexer.LUZ: "luz",
         HomiLexer.SENSOR: "sensor",
         HomiLexer.INTERRUPTOR: "interruptor",
@@ -97,6 +103,7 @@ class TableParser:
 
         ("corpo_automacao", HomiLexer.QUANDO): (
             "bloco_gatilho",
+            "condicoes_opcional",
             "bloco_acoes",
             "modo_opcional",
         ),
@@ -113,6 +120,49 @@ class TableParser:
             HomiLexer.FICAR,
             "valor",
         ),
+
+        ("condicoes_opcional", HomiLexer.SE): ("bloco_condicoes",),
+        ("condicoes_opcional", HomiLexer.FACA): EPSILON,
+
+        ("bloco_condicoes", HomiLexer.SE): (
+            HomiLexer.SE,
+            "expressao_condicao",
+            HomiLexer.PONTO_VIRGULA,
+        ),
+
+        ("expressao_condicao", HomiLexer.ESTADO): (
+            "termo_condicao",
+            "expressao_condicao_cauda",
+        ),
+        ("expressao_condicao", HomiLexer.NAO): (
+            "termo_condicao",
+            "expressao_condicao_cauda",
+        ),
+
+        ("expressao_condicao_cauda", HomiLexer.E): (
+            "operador_logico",
+            "termo_condicao",
+            "expressao_condicao_cauda",
+        ),
+        ("expressao_condicao_cauda", HomiLexer.OU): (
+            "operador_logico",
+            "termo_condicao",
+            "expressao_condicao_cauda",
+        ),
+        ("expressao_condicao_cauda", HomiLexer.PONTO_VIRGULA): EPSILON,
+
+        ("termo_condicao", HomiLexer.ESTADO): ("condicao_estado",),
+        ("termo_condicao", HomiLexer.NAO): (HomiLexer.NAO, "condicao_estado"),
+
+        ("condicao_estado", HomiLexer.ESTADO): (
+            HomiLexer.ESTADO,
+            "referencia",
+            HomiLexer.FICAR,
+            "valor",
+        ),
+
+        ("operador_logico", HomiLexer.E): (HomiLexer.E,),
+        ("operador_logico", HomiLexer.OU): (HomiLexer.OU,),
 
         ("bloco_acoes", HomiLexer.FACA): (
             HomiLexer.FACA,
@@ -170,8 +220,15 @@ class TableParser:
         "automacao_cauda": {EOF},
         "automacao": {HomiLexer.AUTOMACAO, EOF},
         "corpo_automacao": {HomiLexer.FECHA_CHAVE},
-        "bloco_gatilho": {HomiLexer.FACA},
+        "bloco_gatilho": {HomiLexer.SE, HomiLexer.FACA},
         "gatilho": {HomiLexer.PONTO_VIRGULA},
+        "condicoes_opcional": {HomiLexer.FACA},
+        "bloco_condicoes": {HomiLexer.FACA},
+        "expressao_condicao": {HomiLexer.PONTO_VIRGULA},
+        "expressao_condicao_cauda": {HomiLexer.PONTO_VIRGULA},
+        "termo_condicao": {HomiLexer.E, HomiLexer.OU, HomiLexer.PONTO_VIRGULA},
+        "condicao_estado": {HomiLexer.E, HomiLexer.OU, HomiLexer.PONTO_VIRGULA},
+        "operador_logico": {HomiLexer.ESTADO, HomiLexer.NAO},
         "bloco_acoes": {HomiLexer.MODO, HomiLexer.FECHA_CHAVE},
         "comando_lista": {HomiLexer.FECHA_CHAVE},
         "comando": {
@@ -187,7 +244,7 @@ class TableParser:
         "modo": {HomiLexer.FECHA_CHAVE},
         "modo_valor": {HomiLexer.PONTO_VIRGULA},
         "referencia": {HomiLexer.FICAR, HomiLexer.PONTO_VIRGULA},
-        "valor": {HomiLexer.PONTO_VIRGULA},
+        "valor": {HomiLexer.E, HomiLexer.OU, HomiLexer.PONTO_VIRGULA},
     }
 
     def __init__(self, tokens):
@@ -243,16 +300,30 @@ class TableParser:
             self.pos += 1
             return
 
+        if expected_type == HomiLexer.PONTO_VIRGULA:
+            self.errors.append(
+                f"Linha {current.line}, coluna {current.column}: faltou ';' "
+                f"antes de '{self.token_text(current)}'"
+            )
+            return
+
+        if expected_type == EOF:
+            self.errors.append(
+                f"Linha {current.line}, coluna {current.column}: encontrei "
+                f"'{self.token_text(current)}' depois do fim esperado do programa"
+            )
+            return
+
         self.errors.append(
-            f"Linha {current.line}, coluna {current.column}: esperado "
-            f"'{self.token_name(expected_type)}', encontrado "
+            f"Linha {current.line}, coluna {current.column}: esperava "
+            f"'{self.token_name(expected_type)}', mas encontrei "
             f"'{self.token_text(current)}'"
         )
 
     def recover_non_terminal(self, non_terminal: str, lookahead: int, stack):
         expected = self.expected_tokens(non_terminal)
         self.report_current(
-            f"token inesperado em {non_terminal}; esperado {expected}"
+            f"não entendi este trecho em {non_terminal}; esperava {expected}"
         )
 
         follow = self.FOLLOW.get(non_terminal, {EOF})
@@ -337,12 +408,20 @@ class TableParser:
         self.ast_consume(HomiLexer.ABRE_CHAVE)
 
         trigger = self.parse_trigger_block()
+        condition = self.parse_optional_conditions()
         actions = self.parse_actions_block()
         mode = self.parse_optional_mode()
 
         self.ast_consume(HomiLexer.FECHA_CHAVE)
 
-        return Automation(clean_string(name.text), trigger, actions, mode, start.line)
+        return Automation(
+            clean_string(name.text),
+            trigger,
+            condition,
+            actions,
+            mode,
+            start.line,
+        )
 
     def parse_trigger_block(self):
         self.ast_consume(HomiLexer.QUANDO)
@@ -356,6 +435,42 @@ class TableParser:
         self.ast_consume(HomiLexer.FICAR)
         value = self.ast_consume(self.ast_current().type)
         return StateTrigger(reference.text, value.text, start.line)
+
+    def parse_optional_conditions(self):
+        if self.ast_current().type != HomiLexer.SE:
+            return None
+
+        self.ast_consume(HomiLexer.SE)
+        condition = self.parse_condition_expression()
+        self.ast_consume(HomiLexer.PONTO_VIRGULA)
+
+        return condition
+
+    def parse_condition_expression(self):
+        terms = [self.parse_condition_term()]
+        operators = []
+        line = terms[0].line
+
+        while self.ast_current().type in {HomiLexer.E, HomiLexer.OU}:
+            operators.append(self.ast_consume(self.ast_current().type).text)
+            terms.append(self.parse_condition_term())
+
+        return ConditionExpression(terms, operators, line)
+
+    def parse_condition_term(self):
+        negated = False
+        line = self.ast_current().line
+
+        if self.ast_current().type == HomiLexer.NAO:
+            negated = True
+            line = self.ast_consume(HomiLexer.NAO).line
+
+        self.ast_consume(HomiLexer.ESTADO)
+        reference = self.ast_consume(self.ast_current().type)
+        self.ast_consume(HomiLexer.FICAR)
+        value = self.ast_consume(self.ast_current().type)
+
+        return ConditionTerm(reference.text, value.text, negated, line)
 
     def parse_actions_block(self):
         actions = []

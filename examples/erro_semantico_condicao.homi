@@ -1,14 +1,13 @@
 entidade sensor movimento = binary_sensor.movimento;
 entidade luz corredor = light.corredor;
+entidade interruptor tomada = switch.tomada;
 
-automacao "Corredor com movimento" {
+automacao "Erro semantico condicao" {
     quando estado movimento ficar on;
-    se estado corredor ficar off;
+    se estado corredor ficar off e estado tomada ficar off ou nao estado movimento ficar off;
 
     faca {
         ligar corredor;
-        esperar 45s;
-        desligar corredor;
     }
 
     modo restart;

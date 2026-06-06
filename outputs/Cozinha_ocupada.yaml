@@ -5,6 +5,16 @@ trigger:
     entity_id: binary_sensor.presenca_cozinha
     to: "on"
 
+condition:
+  - condition: or
+    conditions:
+      - condition: state
+        entity_id: light.cozinha
+        state: "off"
+      - condition: state
+        entity_id: switch.exaustor
+        state: "off"
+
 action:
   - service: light.turn_on
     target:

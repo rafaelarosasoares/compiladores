@@ -4,6 +4,7 @@ entidade interruptor tomada_tv = switch.tomada_tv;
 
 automacao "Casa desarmada" {
     quando estado alarme_casa ficar disarmed;
+    se estado sala ficar off e nao estado tomada_tv ficar on;
 
     faca {
         ligar sala;

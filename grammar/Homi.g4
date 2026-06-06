@@ -1,6 +1,6 @@
 grammar Homi;
 
-// Parser rules
+// Parser
 
 programa
     : declaracao* automacao+ EOF
@@ -22,7 +22,7 @@ automacao
     ;
 
 corpoAutomacao
-    : blocoGatilho blocoAcoes modo?
+    : blocoGatilho blocoCondicoes? blocoAcoes modo?
     ;
 
 blocoGatilho
@@ -31,6 +31,27 @@ blocoGatilho
 
 gatilho
     : ESTADO referencia FICAR valor
+    ;
+
+blocoCondicoes
+    : SE expressaoCondicao PONTO_VIRGULA
+    ;
+
+expressaoCondicao
+    : termoCondicao (operadorLogico termoCondicao)*
+    ;
+
+termoCondicao
+    : NAO? condicaoEstado
+    ;
+
+condicaoEstado
+    : ESTADO referencia FICAR valor
+    ;
+
+operadorLogico
+    : E
+    | OU
     ;
 
 blocoAcoes
@@ -78,7 +99,7 @@ valor
     | BOOLEAN
     ;
 
-// Lexer rules
+// Lexer
 
 ENTIDADE: 'entidade';
 AUTOMACAO: 'automacao';
@@ -90,6 +111,10 @@ LIGAR: 'ligar';
 DESLIGAR: 'desligar';
 ESPERAR: 'esperar';
 MODO: 'modo';
+SE: 'se';
+E: 'e';
+OU: 'ou';
+NAO: 'nao';
 
 LUZ: 'luz';
 SENSOR: 'sensor';

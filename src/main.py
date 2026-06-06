@@ -1,4 +1,5 @@
 import sys
+from pathlib import Path
 from antlr4 import FileStream, CommonTokenStream
 from antlr4.error.ErrorListener import ErrorListener
 
@@ -21,9 +22,14 @@ class SyntaxErrorCollector(ErrorListener):
         self.errors.append(f"Linha {line}, coluna {column}: {msg}")
 
 
+def plural(count: int, singular: str, plural_form: str) -> str:
+    return singular if count == 1 else plural_form
+
+
 def main():
     if len(sys.argv) < 2:
-        print("Uso: python src/main.py arquivo.homi")
+        print("Passe um arquivo .homi para compilar.")
+        print("Exemplo: python3 src/main.py examples/exemplo1.homi")
         return
 
     input_file = sys.argv[1]
@@ -39,9 +45,10 @@ def main():
     token_stream.fill()
 
     if syntax_error_collector.errors:
+        error_count = len(syntax_error_collector.errors)
         print(
-            f"Análise léxica encontrou "
-            f"{len(syntax_error_collector.errors)} erro(s)."
+            f"Não consegui reconhecer todo o texto do arquivo "
+            f"({error_count} {plural(error_count, 'erro léxico', 'erros léxicos')})."
         )
         for error in syntax_error_collector.errors:
             print(f"- {error}")
@@ -51,24 +58,32 @@ def main():
     ast = parser.parse()
 
     if parser.errors:
-        print(f"Análise sintática encontrou {len(parser.errors)} erro(s).")
+        error_count = len(parser.errors)
+        print(
+            f"Encontrei {error_count} "
+            f"{plural(error_count, 'problema de sintaxe', 'problemas de sintaxe')}."
+        )
         for error in parser.errors:
             print(f"- {error}")
         return
 
-    print("Análise sintática concluída sem erros.")
+    print("Sintaxe ok.")
 
     semantic_analyzer = SemanticAnalyzer()
     semantic_errors = semantic_analyzer.analyze(ast)
 
     if semantic_errors:
-        print("\nErros semânticos encontrados:")
+        error_count = len(semantic_errors)
+        print(
+            f"\nEncontrei {error_count} "
+            f"{plural(error_count, 'problema semântico', 'problemas semânticos')}."
+        )
         for error in semantic_errors:
             print(f"- {error}")
         return
 
-    print("Análise semântica concluída sem erros.")
-    print("Programa válido.")
+    print("Semântica ok.")
+    print("Programa válido. Gerando YAML...")
 
     # Geração YAML
     generator = YamlGenerator(
@@ -82,7 +97,10 @@ def main():
             automation
         )
 
-        filename = (
+        output_dir = Path("outputs")
+        output_dir.mkdir(exist_ok=True)
+
+        filename = output_dir / (
             automation.name.replace(" ", "_")
             + ".yaml"
         )
@@ -94,7 +112,7 @@ def main():
         ) as file:
             file.write(yaml_text)
 
-        print(f"YAML gerado: {filename}")
+        print(f"- Arquivo gerado: {filename}")
 
 
 if __name__ == "__main__":

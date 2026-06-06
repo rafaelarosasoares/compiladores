@@ -20,6 +20,7 @@ class EntityDecl:
 class Automation:
     name: str
     trigger: "StateTrigger"
+    condition: Optional["ConditionExpression"]
     actions: List["Action"]
     mode: Optional[str]
     line: int = 0
@@ -29,6 +30,21 @@ class Automation:
 class StateTrigger:
     entity: str
     value: str
+    line: int = 0
+
+
+@dataclass
+class ConditionExpression:
+    terms: List["ConditionTerm"]
+    operators: List[str]
+    line: int = 0
+
+
+@dataclass
+class ConditionTerm:
+    entity: str
+    value: str
+    negated: bool = False
     line: int = 0
 
 

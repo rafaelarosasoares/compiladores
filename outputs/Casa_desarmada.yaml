@@ -5,6 +5,16 @@ trigger:
     entity_id: alarm_control_panel.alarmo
     to: "disarmed"
 
+condition:
+  - condition: state
+    entity_id: light.sala
+    state: "off"
+  - condition: not
+    conditions:
+      - condition: state
+        entity_id: switch.tomada_tv
+        state: "on"
+
 action:
   - service: light.turn_on
     target:

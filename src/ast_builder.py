@@ -10,6 +10,8 @@ from ast_nodes import (
     EntityDecl,
     Automation,
     StateTrigger,
+    ConditionExpression,
+    ConditionTerm,
     SimpleAction,
     DelayAction,
 )
@@ -50,13 +52,16 @@ class AstBuilder(HomiVisitor):
         body = ctx.corpoAutomacao()
 
         trigger = self.visit(body.blocoGatilho())
+        condition = None
+        if body.blocoCondicoes() is not None:
+            condition = self.visit(body.blocoCondicoes())
         actions = self.visit(body.blocoAcoes())
 
         mode = None
         if body.modo() is not None:
             mode = body.modo().modoValor().getText()
 
-        return Automation(name, trigger, actions, mode, line_of(ctx))
+        return Automation(name, trigger, condition, actions, mode, line_of(ctx))
 
     def visitBlocoGatilho(self, ctx: HomiParser.BlocoGatilhoContext):
         return self.visit(ctx.gatilho())
@@ -65,6 +70,21 @@ class AstBuilder(HomiVisitor):
         entity = ctx.referencia().getText()
         value = ctx.valor().getText()
         return StateTrigger(entity, value, line_of(ctx))
+
+    def visitBlocoCondicoes(self, ctx: HomiParser.BlocoCondicoesContext):
+        return self.visit(ctx.expressaoCondicao())
+
+    def visitExpressaoCondicao(self, ctx: HomiParser.ExpressaoCondicaoContext):
+        terms = [self.visit(term_ctx) for term_ctx in ctx.termoCondicao()]
+        operators = [op_ctx.getText() for op_ctx in ctx.operadorLogico()]
+        return ConditionExpression(terms, operators, line_of(ctx))
+
+    def visitTermoCondicao(self, ctx: HomiParser.TermoCondicaoContext):
+        condition = ctx.condicaoEstado()
+        entity = condition.referencia().getText()
+        value = condition.valor().getText()
+        negated = ctx.NAO() is not None
+        return ConditionTerm(entity, value, negated, line_of(ctx))
 
     def visitBlocoAcoes(self, ctx: HomiParser.BlocoAcoesContext):
         actions = []

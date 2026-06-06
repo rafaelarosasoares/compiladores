@@ -4,6 +4,7 @@ entidade interruptor exaustor = switch.exaustor;
 
 automacao "Cozinha ocupada" {
     quando estado presenca_cozinha ficar on;
+    se estado cozinha ficar off ou estado exaustor ficar off;
 
     faca {
         ligar cozinha;
