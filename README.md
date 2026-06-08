@@ -1,3 +1,7 @@
+## Trabalho de Compiladores
+
+- Realizado por Henrique Pozzebon e Rafaela da Rosa Soares
+
 ## Requisitos
 
 - Python 3
